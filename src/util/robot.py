@@ -8,16 +8,20 @@ class RobotDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
         self,
         control_mode="max",
         disturbance_mode="min",
-        uMax=+1.0,
+        uA_max = 1.0,
+        uB_max = 1.0,
+        d_max = 0.2,
     ):
-        self.uMax = uMax
+        self.uA_max = uA_max
+        self.uB_max = uB_max
+        self.d_max = d_max
 
         control_space = sets.Ball(
-            jnp.array([0.0, 0.0]), self.uMax
+            jnp.array([0.0, 0.0, 0.0, 0.0]), self.uA_max
         )
-        disturbance_space = sets.Box(
-            jnp.array([0.0]), jnp.array([0.0])
-        )  # no disturbance
+        disturbance_space = sets.Ball(
+            jnp.array([0.0, 0.0, 0.0, 0.0]), self.d_max
+        )
 
         super().__init__(
             control_mode, disturbance_mode, control_space, disturbance_space

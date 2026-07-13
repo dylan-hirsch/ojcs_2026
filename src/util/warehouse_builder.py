@@ -33,7 +33,7 @@ class Wall:
         sdf = np.sqrt(np.maximum(qx, 0.0 * qx)**2 + np.maximum(qy, 0.0 * qy)**2) + np.minimum(np.maximum(qx, qy), 0.0 * qx)
         return sdf / min(self.hx, self.hy)
 
-class Goal:
+class Shelf:
 
     def __init__(self, x0: float, y0: float, x1: float, y1: float):
 
@@ -63,14 +63,14 @@ class Goal:
         sdf = np.sqrt(np.maximum(qx, 0.0 * qx)**2 + np.maximum(qy, 0.0 * qy)**2) + np.minimum(np.maximum(qx, qy), 0.0 * qx)
         return -sdf / min(self.hx, self.hy)
 
-class Maze:
+class Warehouse:
 
     def __init__(self):
 
         self.walls = []
-        self.goals = []
+        self.shelves = []
 
-    def obstacle_sdf(self, grid):
+    def constraint_sdf(self, grid):
 
         sdf = np.inf * np.ones(grid.shape[:-1])
         for wall in self.walls:
@@ -80,13 +80,13 @@ class Maze:
 
     def target_sdf(self, grid):
         sdf = -np.inf * np.ones(grid.shape[:-1])
-        for goal in self.goals:
-            sdf = np.maximum(sdf, goal(grid))
+        for shelfs in self.shelves:
+            sdf = np.maximum(sdf, shelves(grid))
 
         return sdf
 
     def add_wall(self, wall):
         self.walls.append(wall)
 
-    def add_goal(self, goal):
-        self.goals.append(goal)
+    def add_shelf(self, shelf):
+        self.shelves.append(shelf)
