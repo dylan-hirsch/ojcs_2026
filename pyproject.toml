@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gra-util"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "hj-reachability>=0.7.0",
+    "matplotlib>=3.11.0",
+    "numpy>=2.5.1",
+    "scipy>=1.18.0",
+    "tqdm>=4.68.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
