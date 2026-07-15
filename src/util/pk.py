@@ -2,7 +2,7 @@ import jax.numpy as jnp
 from hj_reachability import dynamics, sets
 
 
-class RobotDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
+class PKDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
 
     def __init__(
         self,
@@ -16,9 +16,9 @@ class RobotDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
         c_1 = 1.,
         D_1 = 1.,
         k_1 = 1.,
-        beta = 1.
+        beta = 1.,
         k_2 = 1.,
-        gamma = .1
+        gamma = .1,
 
         control_mode="max",
         disturbance_mode="min",
@@ -30,7 +30,7 @@ class RobotDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
         control_space = sets.Box(
             jnp.array([0.0, 0.0]), jnp.array([u_max, u_max])
         )
-        )
+
         disturbance_space = sets.Ball(
             jnp.array([0.0, 0.0]), self.d_max
         )
@@ -49,7 +49,8 @@ class RobotDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
                 self.eta_2 * D_2 / (self.c_2 + D_2) + \
                 self.kappa * D_1 * D_2 / (self.c_1 + D_1) / (self.c_2 + D_2) \
                 - self.beta * E
-        f[2] = D_1 * D_2 / (self.c_1 + D_1) / (self.c_2 + D_2) \ self.gamma * T
+        f[2] = D_1 * D_2 / (self.c_1 + D_1) / (self.c_2 + D_2) \
+                - self.gamma * T
         return f
 
     def control_jacobian(self, state, time):
