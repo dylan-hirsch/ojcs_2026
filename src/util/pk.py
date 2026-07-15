@@ -14,9 +14,9 @@ class PKDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
         eta_2 = 1.,
         kappa = 4.,
         c_1 = 1.,
-        D_1 = 1.,
-        k_1 = 1.,
+        c_2 = 1.,
         beta = 1.,
+        k_1 = 1.,
         k_2 = 1.,
         gamma = .1,
 
@@ -42,33 +42,31 @@ class PKDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
     def open_loop_dynamics(self, state, time):
         D_1, D_2, E, T = state
 
-        f = jnp.zeros((4,))
-        f[0] = -self.alpha_1 * D_1
-        f[1] = -self.alpha_2 * D_2
-        f[2] = self.eta_1 * D_1 / (self.c_1 + D_1) + \
-                self.eta_2 * D_2 / (self.c_2 + D_2) + \
-                self.kappa * D_1 * D_2 / (self.c_1 + D_1) / (self.c_2 + D_2) \
-                - self.beta * E
-        f[2] = D_1 * D_2 / (self.c_1 + D_1) / (self.c_2 + D_2) \
-                - self.gamma * T
-        return f
+        return jnp.array([
+            -self.alpha_1 * D_1,
+            -self.alpha_2 * D_2,
+            self.eta_1 * D_1 / (self.c_1 + D_1) +
+                self.eta_2 * D_2 / (self.c_2 + D_2) +
+                self.kappa * D_1 * D_2 / (self.c_1 + D_1) / (self.c_2 + D_2) -
+                self.beta * E,
+            D_1 * D_2 / (self.k_1 + D_1) / (self.k_2 + D_2) -
+                self.gamma * T,
+        ])
 
     def control_jacobian(self, state, time):
 
-        g = jnp.zeros((4,2))
-
-        g[0,0] = 1
-        g[1,1] = 1
-
-        return g
+        return jnp.array([
+            [1., 0.],
+            [0., 1.],
+            [0., 0.],
+            [0., 0.],
+        ])
 
     def disturbance_jacobian(self, state, time):
         
-        h = jnp.zeros((4,2))
-
-        D_1, D_2, _, _ = state
-        
-        h[0,0] = -self.alpha_1
-        h[1,1] = -self.alpha_2
-
-        return h
+        return jnp.array([
+            [-self.alpha_1, 0.],
+            [0., -self.alpha_2],
+            [0., 0.],
+            [0., 0.],
+        ])
