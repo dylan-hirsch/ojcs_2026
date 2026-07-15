@@ -58,6 +58,26 @@ class ClosedLoopTrajectory:
 
         self._solve_ivp(**kwargs)
 
+    @property
+    def states(self):
+        """
+        Docstring for states
+
+        Returns the full closed-loop trajectory as an array of shape
+        (steps + 1, state_dim), one row per sample-and-hold step.
+        """
+        return np.array(self._sols)
+
+    @property
+    def times(self):
+        """
+        Docstring for times
+
+        Returns the time stamps of the closed-loop trajectory as an array of
+        shape (steps + 1,), matching the rows of `states`.
+        """
+        return np.array(self._ts)
+
     def x(self, t):
         return self._sols[self._get_sol_index(t)]
 
@@ -89,7 +109,7 @@ class ClosedLoopTrajectory:
             )
 
             gradient_right = self._grid.interpolate(
-                self._gradV[min(j + offset, T - 1)], state=state
+                self._gradV[min(k + offset, T - 1)], state=state
             )
 
             gradient = (
