@@ -94,6 +94,9 @@ class ClosedLoopTrajectory:
         return self._value(t, self.x(t))
 
     def _gradient(self, t, state, offset = 0):
+        # interpolating outside the grid domain yields NaN, and the closed
+        # loop may drift slightly past the boundary; clamp to the domain
+        state = np.clip(state, self._grid.domain.lo, self._grid.domain.hi)
         j, k = self._get_time_indexes(t)
 
         T = len(self._gradV)
@@ -120,6 +123,7 @@ class ClosedLoopTrajectory:
         return gradient
 
     def _value(self, t, state):
+        state = np.clip(state, self._grid.domain.lo, self._grid.domain.hi)
         j, k = self._get_time_indexes(t)
 
         if j == k:
