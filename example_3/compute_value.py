@@ -38,11 +38,11 @@ if __name__ == "__main__":
 
     # specify the number of voxels to divide the spatial and temporal axes
     SPACE_RES = 21
-    TIME_RES = 11
+    TIME_RES = 6
 
     # Specify PDE grid corners
-    X_MIN = 0.
-    Y_MIN = 0.
+    X_MIN = -.1
+    Y_MIN = -.1
 
     X_MAX = 2.
     Y_MAX = 2.
@@ -53,11 +53,10 @@ if __name__ == "__main__":
 
     # Initial state and number of steps to take in closed loop
     X0 = (0., 0., 0., 0.)
-    STEPS = 100
+    STEPS = 10
 
 
     # build the dynamics model 
-    model = PKDynamics(u_max = 1.0)
 
     # build the grid 
     grid = hj.Grid.from_lattice_parameters_and_boundary_conditions(
@@ -66,24 +65,56 @@ if __name__ == "__main__":
         [SPACE_RES, SPACE_RES, SPACE_RES, SPACE_RES],
         periodic_dims=None
     )
-    times = np.linspace(10, 8, TIME_RES)
 
-    # compute the downstream value function
+    # compute value functions
+    Vs = []
+    models = []
+    timess = []
+    b = 10
+    a = 8
     r = grid.states[..., 2] - THRESH_THERAPEUTIC
     q = THRESH_TOXIC - grid.states[..., 3]
-    V = compute_value(model, grid, times, r, q, r)
+    l = r
+    for i in range(5):
+        times = np.linspace(b, a, TIME_RES)
+        if i % 2:
+            model = PKDynamics(u_max = 0.0)
+        else:
+            model = PKDynamics(u_max = 1.0)
+        V = compute_value(model, grid, times, r, q, l)
+        l = V[-1,...]
+        Vs.append(V)
+        models.append(model)
+        timess.append(times)
+        b = b - 2
+        a = a - 2
 
-    # Run closed loop
-    cl = ClosedLoopTrajectory(model, grid, times, V, X0, steps=STEPS)
-    traj = cl.states
-    t_traj = cl.times
-    us = np.array([cl.u(t) for t in t_traj[:-1]])
+    # Compute closed loop trajectories forward in time using the value function
+    CLs = []
+    for V, model, times in zip(Vs[::-1], models[::-1], timess[::-1]):
+        cl = ClosedLoopTrajectory(model, grid, times, V, X0, steps = STEPS)
+        X0 = cl.states[-1,:]
+        CLs.append(cl)
 
-    # Visualize the closed loop: drug concentrations on top, therapeutic
-    # effect and toxicity against their thresholds in the middle, and the
-    # sample-and-hold dosing schedule on the bottom
-    fig, (ax_drug, ax_resp, ax_u) = plt.subplots(
-        3, 1, figsize=(6.5, 8), sharex=True, layout="constrained"
+    # Plot closed-loop trajectory, inputs, and disturbances
+    # Stitch the per-phase trajectories into one forward-time history
+    traj = np.vstack([CLs[0].states] + [cl.states[1:] for cl in CLs[1:]])
+    t_traj = np.concatenate([CLs[0].times] + [cl.times[1:] for cl in CLs[1:]])
+    t_u = np.concatenate([cl.times[:-1] for cl in CLs])
+    us = np.concatenate(
+        [np.array([cl.u(t) for t in cl.times[:-1]]) for cl in CLs]
+    )
+    ds = np.concatenate(
+        [np.array([cl.d(t) for t in cl.times[:-1]]) for cl in CLs]
+    )
+
+    # append the final sample so step plots extend to the end of the horizon
+    t_step = np.append(t_u, t_traj[-1])
+    u_step = np.vstack([us, us[-1:]])
+    d_step = np.vstack([ds, ds[-1:]])
+
+    fig, (ax_drug, ax_resp, ax_u, ax_d) = plt.subplots(
+        4, 1, figsize=(6.5, 10), sharex=True, layout="constrained"
     )
 
     ax_drug.plot(t_traj, traj[:, 0], color="tab:blue", label="$D_1$")
@@ -100,14 +131,28 @@ if __name__ == "__main__":
     ax_resp.set_ylabel("response")
     ax_resp.legend()
 
-    ax_u.step(t_traj, np.concatenate([us[:, 0], us[-1:, 0]]), where="post",
-              color="tab:blue", label="$u_1$")
-    ax_u.step(t_traj, np.concatenate([us[:, 1], us[-1:, 1]]), where="post",
-              color="tab:orange", label="$u_2$")
-    ax_u.set_xlabel("time")
+    ax_u.step(t_step, u_step[:, 0], where="post", color="tab:blue",
+              label="$u_1$")
+    ax_u.step(t_step, u_step[:, 1], where="post", color="tab:orange",
+              label="$u_2$")
     ax_u.set_ylabel("dose rate")
-    ax_u.set_ylim(-0.05, model.control_space.hi[0] + 0.05)
+    ax_u.set_ylim(-0.05, max(m.u_max for m in models) + 0.05)
     ax_u.legend()
+
+    ax_d.step(t_step, d_step[:, 0], where="post", color="tab:blue",
+              label="$d_1$")
+    ax_d.step(t_step, d_step[:, 1], where="post", color="tab:orange",
+              label="$d_2$")
+    ax_d.set_xlabel("time")
+    ax_d.set_ylabel("disturbance")
+    ax_d.legend()
+
+    # shade the phases in which dosing is unavailable
+    for cl, model in zip(CLs, models[::-1]):
+        if model.u_max == 0.0:
+            for ax in (ax_drug, ax_resp, ax_u, ax_d):
+                ax.axvspan(cl.times[0], cl.times[-1], color="gray",
+                           alpha=0.15, zorder=0)
 
     fig.savefig("closed_loop.png", dpi=150)
     plt.show()
