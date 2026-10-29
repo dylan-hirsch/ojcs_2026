@@ -27,26 +27,25 @@ class BallProduct(sets.BoundedSet):
                         jnp.concatenate([box_a.hi, box_b.hi], axis=-1))
 
 
-class RobotDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
+class DroneDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
 
     def __init__(
         self,
-        uA_max = 1.0,
-        uB_max = 1.0,
-        d_max = 0.2,
+        u_max = 1.,
+        d_max_NE = 1.5,
+        d_max_SW = 1.2,
         control_mode="max",
         disturbance_mode="min",
     ):
-        self.uA_max = uA_max
-        self.uB_max = uB_max
-        self.d_max = d_max
+        self.u_max = u_max
+        self.d_max_NE = d_max_NE
+        self.d_max_SW = d_max_SW
 
-        control_space = BallProduct(
-            sets.Ball(jnp.array([0.0, 0.0]), self.uA_max),
-            sets.Ball(jnp.array([0.0, 0.0]), self.uB_max),
+        control_space = sets.Ball(
+            jnp.array([0.0, 0.0]), self.u_max
         )
-        disturbance_space = sets.Ball(
-            jnp.array([0.0, 0.0, 0.0, 0.0]), self.d_max
+        disturbance_space = sets.Box(
+            jnp.array([-self.d_max_SW, -self.d_max_SW]), jnp.array([self.d_max_NE, self.d_max_NE])
         )
 
         super().__init__(
@@ -54,17 +53,17 @@ class RobotDynamics(dynamics.ControlAndDisturbanceAffineDynamics):
         )
 
     def open_loop_dynamics(self, state, time):
-        f = jnp.zeros((4,1))
+        f = jnp.zeros((2,1))
 
-        return f.reshape((4, ))
+        return f.reshape((2, ))
 
     def control_jacobian(self, state, time):
 
-        g = jnp.eye(4)
+        g = jnp.eye(2)
 
         return g
 
     def disturbance_jacobian(self, state, time):
-        h = jnp.eye(4)
+        h = jnp.eye(2)
 
         return h
