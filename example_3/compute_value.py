@@ -123,7 +123,7 @@ if __name__ == "__main__":
     ax_drug.legend()
 
     ax_resp.plot(t_traj, traj[:, 2], color="tab:green", label="$E$ (effect)")
-    ax_resp.plot(t_traj, traj[:, 3], color="tab:red", label="$T$ (toxicity)")
+    ax_resp.plot(t_traj, traj[:, 3], color="tab:red", label="$Y$ (toxicity)")
     ax_resp.axhline(THRESH_THERAPEUTIC, color="tab:green", linestyle="--",
                     label="therapeutic threshold")
     ax_resp.axhline(THRESH_TOXIC, color="tab:red", linestyle=":",
@@ -154,5 +154,5 @@ if __name__ == "__main__":
                 ax.axvspan(cl.times[0], cl.times[-1], color="gray",
                            alpha=0.15, zorder=0)
 
-    fig.savefig("closed_loop.png", dpi=150)
+    fig.savefig("/Users/dylanhirsch/Desktop/PK.pdf")
     plt.show()
