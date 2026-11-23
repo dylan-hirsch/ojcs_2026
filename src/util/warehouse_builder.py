@@ -96,7 +96,7 @@ class Warehouse:
     def add_shelf(self, shelf):
         self.shelves.append(shelf)
 
-    def plot_value_functions(self, grid_states, ax):
+    def plot_value_functions(self, grid_states, ax, linewidth=2):
 
         """
         Visualizes the shelf (target) SDF in green and the wall (constraint)
@@ -110,13 +110,13 @@ class Warehouse:
         shelf_sdf = self.shelf_sdf(grid_states)
 
         # zero level sets: shelf SDF is positive inside, wall SDF negative inside
-        ax.contour(X, Y, shelf_sdf, levels=[0.0], colors="green", linewidths=2)
-        ax.contour(X, Y, wall_sdf, levels=[0.0], colors="red", linewidths=2)
+        ax.contour(X, Y, shelf_sdf, levels=[0.0], colors="green", linewidths=linewidth)
+        ax.contour(X, Y, wall_sdf, levels=[0.0], colors="red", linewidths=linewidth)
         ax.contourf(X, Y, shelf_sdf, levels=[0.0, np.inf], colors=["green"], alpha=0.2)
         ax.contourf(X, Y, wall_sdf, levels=[-np.inf, 0.0], colors=["red"], alpha=0.2)
 
         ax.set_aspect("equal")
-        ax.set_xlabel(r"$x_{1,A}, x_{2,B}$")
+        ax.set_xlabel(r"$x_{1,A}, x_{1,B}$")
         ax.set_ylabel("$x_{2,A}, x_{2,B}$")
         ax.set_title("Warehouse floor")
         return ax

@@ -21,6 +21,7 @@ wandb/
 *.pkl
 *.swp
 *.pt
+*.npz
 .DS_Store
 
 # Virtual environments

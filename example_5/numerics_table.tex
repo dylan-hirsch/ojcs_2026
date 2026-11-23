@@ -1,0 +1,29 @@
+% Numerical parameters for Example 5 (canoe in a windy lake, Section S.X),
+% in the format of Supplementary Table S5.
+\begin{table}[h]
+\centering
+\caption{Numerical parameters used to compute the value functions of Example 5 with \texttt{hj\_reachability} (v0.7.0).}
+\label{tab:ex5_numerics}
+\begin{tabular}{ll}
+\toprule
+Parameter & Ex.~5 \\
+\midrule
+State $(y_1, y_2)$ & planar canoe, control $(u_1, u_2)$, disturbance $(d_1, d_2)$ \\
+Spatial domain & $[-15, 15]^2$ \\
+Grid & $1001 \times 1001$ nodes \\
+Grid spacing $\Delta x$ & $0.03$ ($y_1, y_2$) \\
+Time horizon & $[0, 7]$ \\
+Snapshot spacing $\Delta t$ & $0.0035$ ($2000$ steps) \\
+HJ solves & $3$ GRA on $[0, 7]$: $V_{\mathrm{GRA}}$, $V_{\mathrm{RA}}$, $V_{\mathrm{CT}}$ \\
+Solver settings & \texttt{SolverSettings.with\_accuracy("very\_high")} \\
+Spatial scheme & 5th-order WENO \\
+Time integrator & 3rd-order TVD Runge--Kutta, adaptive step, CFL number 0.75 \\
+Dissipation & global Lax--Friedrichs \\
+Closed-loop sample-and-hold steps & 100 ($\Delta t = 0.07$, adaptive RK45), from $y(0) = (0, 0)$ \\
+\midrule
+Control bound $u_{\max}$, disturbance bound $d_{\max}$ & $\|u\|_2 \le 1$, $|d_1|, |d_2| \le 1$ \\
+Wind gains $h_1$, $h_2$ & $h_1 = q - 0.4$, $h_2 = 0.05\, h_1$ \\
+Corridor parameters $a$, $b$ & $-5.255$, $1.745$ \\
+\bottomrule
+\end{tabular}
+\end{table}
