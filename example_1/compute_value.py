@@ -151,9 +151,9 @@ if __name__ == "__main__":
         ax_V.set_xlabel(r"$x$", fontsize=25)
         ax_V.set_ylabel(r"$y$", fontsize=25)
         if i == 0:
-            ax_V.set_title("True value function\n"+ r"$V_{\mathrm{GRA}}[r,q,l;T]$", fontsize=16.5)
+            ax_V.set_title("True value function\n"+ r"$V_{\mathrm{GRA}}[l,r,q;T]$", fontsize=16.5)
         if i == 1:
-            ax_V.set_title("Naive value function\n" + r"$\max\{V_{\mathrm{RA}}[r,q;T], V_{\mathrm{A}}[q;T]\}$", fontsize=16.5)
+            ax_V.set_title("Naive value function\n" + r"$\max\{V_{\mathrm{A}}[q;T], V_{\mathrm{RA}}[r,q;T]\}$", fontsize=16.5)
 
     fig.colorbar(pcm, ax=axes[0], shrink=0.85, label=r"$V(x, 0)$",
                  ticks=cbar_ticks)

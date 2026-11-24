@@ -110,11 +110,16 @@ if __name__ == "__main__":
     cl = ClosedLoopTrajectory(model, grid, times_upstream, V, X0, steps = STEPS)
     cl0 = ClosedLoopTrajectory(model, grid, times_downstream, V0, cl.states[-1,:], steps = STEPS)
     
-    # Visualize solution: trajectories on top, collision distance below
+    # Visualize solution: trajectories on the left, collision distance on the
+    # right
+    TEXT_SIZE = 1.3 * 1.25 * plt.rcParams["font.size"]
+    LEGEND_SIZE = TEXT_SIZE
+    TITLE_SIZE = 1.2 * TEXT_SIZE  # matplotlib titles default to 1.2x body text
+    MATH_LABEL_SIZE = 1.3 * 1.6 * plt.rcParams["font.size"]
     fig, (ax, ax_d) = plt.subplots(
-        2, 1, figsize=(6.5, 9), height_ratios=[2.2, 1], layout="constrained"
+        1, 2, figsize=(12, 6), layout="constrained"
     )
-    ax = warehouse.plot_value_functions(grid.states[:,:,0,0,:], ax)
+    ax = warehouse.plot_value_functions(grid.states[:,:,0,0,:], ax, linewidth=4)
 
     # project the closed-loop trajectory onto each robot's position, with the
     # line hue darkening over time so equal shades mark simultaneous positions
@@ -131,24 +136,40 @@ if __name__ == "__main__":
 
         points = traj[:, cols].reshape(-1, 1, 2)
         segments = np.concatenate([points[:-1], points[1:]], axis=1)
-        lc = LineCollection(segments, cmap=cmap, norm=norm, linewidths=2,
+        lc = LineCollection(segments, cmap=cmap, norm=norm, linewidths=4,
                             capstyle="round")
         lc.set_array(t_traj[:-1])
         ax.add_collection(lc)
 
         ax.plot(*traj[0, list(cols)], "o", color=cmap(0.0))
-        ax.plot(*traj[-1, list(cols)], "x", color=cmap(1.0), markersize=8)
+        ax.plot(*traj[-1, list(cols)], "x", color=cmap(1.0), markersize=16, mew=4)
 
-    ax.legend(handles=[Line2D([], [], color=plt.get_cmap("Blues")(0.7), lw=2, label="robot A"),
-                       Line2D([], [], color=plt.get_cmap("Oranges")(0.7), lw=2, label="robot B")])
+    # robot legend in two columns beneath the warehouse map
+    ax.legend(handles=[Line2D([], [], color=plt.get_cmap("Blues")(0.7), lw=4, label="robot A"),
+                       Line2D([], [], color=plt.get_cmap("Oranges")(0.7), lw=4, label="robot B")],
+              loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2,
+              fontsize=LEGEND_SIZE)
 
     dist = np.linalg.norm(traj[:, :2] - traj[:, 2:], axis=1)
-    ax_d.plot(t_traj, dist, color="black")
-    ax_d.axhline(SAFE_DIST, color="red", linestyle="--", label="collision distance")
+    ax_d.plot(t_traj, dist, color="black", lw=3)
+    ax_d.axhline(SAFE_DIST, color="red", linestyle="--", lw=3, label="collision distance")
     ax_d.set_xlabel("time")
     ax_d.set_ylabel("inter-robot distance")
     ax_d.set_ylim(bottom=0.0)
-    ax_d.legend()
+    ax_d.legend(fontsize=LEGEND_SIZE)
+    # match the square warehouse map so both panels are the same size
+    ax_d.set_box_aspect(1)
+
+    # enlarge titles, axis labels, and tick labels
+    for a in (ax, ax_d):
+        for text in (a.title, a.xaxis.label, a.yaxis.label):
+            text.set_fontsize(TITLE_SIZE if text is a.title else TEXT_SIZE)
+        a.tick_params(labelsize=TEXT_SIZE)
+    # mathtext renders smaller than plain text, so bump the map's labels further
+    ax.xaxis.label.set_fontsize(MATH_LABEL_SIZE)
+    ax.yaxis.label.set_fontsize(MATH_LABEL_SIZE)
+
+    fig.savefig("/Users/dylanhirsch/Desktop/warehouse.pdf")
 
     # Animate the closed loop: each robot is a disk of radius SAFE_DIST / 2,
     # so the constraint q_AB >= 0 holds exactly when the disks never touch.
