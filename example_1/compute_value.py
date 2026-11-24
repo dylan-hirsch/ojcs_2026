@@ -1,4 +1,6 @@
 # fundamental numerical library
+from pathlib import Path
+
 import hj_reachability as hj
 import numpy as np
 import jax
@@ -58,6 +60,9 @@ def optimal_disturbance_field(model, grid, Vf, time=0.0, skip=6):
             np.asarray(grid.states[sl][..., 1]),
             np.asarray(d[sl][..., 0]),
             np.asarray(d[sl][..., 1]))
+
+
+HERE = Path(__file__).resolve().parent
 
 
 if __name__ == "__main__":
@@ -224,5 +229,5 @@ if __name__ == "__main__":
         handler_map={FancyArrow: HandlerPatch(patch_func=_legend_arrow)},
     )
 
-    fig.savefig("/Users/dylanhirsch/Desktop/value_comparison.pdf")
+    fig.savefig(HERE / "value_comparison.pdf")
     plt.show()

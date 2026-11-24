@@ -1,4 +1,6 @@
 # fundamental numerical library
+from pathlib import Path
+
 import hj_reachability as hj
 import numpy as np
 import jax.numpy as jnp
@@ -34,6 +36,10 @@ def compute_value(model, grid, times, r, q, l):
     )
 
     return V
+
+
+HERE = Path(__file__).resolve().parent
+
 
 if __name__ == "__main__":
 
@@ -169,7 +175,7 @@ if __name__ == "__main__":
     ax.xaxis.label.set_fontsize(MATH_LABEL_SIZE)
     ax.yaxis.label.set_fontsize(MATH_LABEL_SIZE)
 
-    fig.savefig("/Users/dylanhirsch/Desktop/warehouse.pdf")
+    fig.savefig(HERE / "warehouse.pdf")
 
     # Animate the closed loop: each robot is a disk of radius SAFE_DIST / 2,
     # so the constraint q_AB >= 0 holds exactly when the disks never touch.
@@ -205,6 +211,6 @@ if __name__ == "__main__":
         return disk_A, disk_B, trail_A, trail_B, cursor
 
     anim = FuncAnimation(fig2, update, frames=len(t_traj), interval=50)
-    anim.save("closed_loop.gif", writer="pillow", fps=20, dpi=90)
+    anim.save(HERE / "closed_loop.gif", writer="pillow", fps=20, dpi=90)
 
     plt.show()

@@ -1,18 +1,15 @@
 """
-Summary figure for Example 4, built from the saved outputs of the two scripts:
+Summary figure for Example 4 (Fig. 6), built from the saved outputs of
+compute_value.py:
 
-  * data/values.npz       (compute_value.py: proposed value functions)
-  * data/closed_loop.npz  (compute_value.py: closed-loop trajectories)
-  * data/comparison.npz   (baseline.py: t = 0 value functions and timings of
-                           both approaches)
+  * data/values.npz       (value functions)
+  * data/closed_loop.npz  (closed-loop trajectories)
 
 Panels (2 x 2):
-  (top left)     V(x, y, theta, omega; t = 0) from the efficient approach
-  (top right)    the same slice from the naive approach
-  (bottom left)  closed loops that complete the task by t = 5: one reaches
-                 target 0 (grocery store) before t = 5, one is at the truck
-                 site at exactly t = 5
-  (bottom right) closed loop that tours targets 1, 2, 3 during [5, 10]
+  (top left)     V(x, y, theta, omega; t = 0), computed with Theorem 1
+  (other panels) one closed loop each: touring targets 1, 2, 3 during
+                 [5, 10], reaching target 0 (grocery store) before t = 5,
+                 and being at the truck site at exactly t = 5
 
 Targets are drawn as their boxes with an emoji: target 1 is a kiwi, target 2
 a tomato, target 3 a lemon, target 0 shows all three, and the truck site
@@ -34,7 +31,7 @@ from matplotlib.patches import Circle, Rectangle
 import compute_value as cv
 
 
-# slice of the 4D value function shown in the top two panels
+# slice of the 4D value function shown in the top-left panel
 THETA = -np.pi / 2
 OMEGA = 0.0
 V_MIN, V_MAX = -1.0, 0.6  # color limits of the value plots (clipped beyond)
@@ -203,11 +200,11 @@ if __name__ == "__main__":
 
     model, grid, q, rs = cv.build_problem()
 
-    comparison = np.load(cv.HERE / "data" / "comparison.npz")
+    values = np.load(cv.HERE / "data" / "values.npz")
     closed_loop = np.load(cv.HERE / "data" / "closed_loop.npz")
 
-    V_prop, V_base = comparison["V_prop_t0"], comparison["V_base_t0"]
-    t_prop, t_base = comparison["times_prop"], comparison["times_base"]
+    # V_up is stored backward in time on [0, T_SWITCH], so [-1] is t = 0
+    V0 = values["V_up"][-1]
 
     sims = []
     for i in range(len(cv.INITIAL_STATES)):
@@ -215,29 +212,33 @@ if __name__ == "__main__":
                           closed_loop[f"event_names_{i}"]))
         sims.append((closed_loop[f"x_{i}"], closed_loop[f"t_{i}"], events))
 
-    # bottom left: done by t = 5 (grocery store or truck); bottom right: tour
-    done_early = [any(n in ("target 0", "truck") for _, n in ev) for _, _, ev in sims]
-    sims_early = [sim for sim, e in zip(sims, done_early) if e]
-    sims_tour = [sim for sim, e in zip(sims, done_early) if not e]
+    def outcome(sim):
+        names = [n for _, n in sim[2]]
+        return names[0] if names and names[0] in ("target 0", "truck") else "tour"
 
-    fig, ((ax_prop, ax_base), (ax_cl0, ax_cl1)) = plt.subplots(
+    by_outcome = {outcome(sim): sim for sim in sims}
+    titles = {"tour": "Closed loop: tour targets 1, 2, 3",
+              "target 0": "Closed loop: grocery store",
+              "truck": "Closed loop: truck"}
+
+    fig, ((ax_val, ax_tour), (ax_store, ax_truck)) = plt.subplots(
         2, 2, figsize=(10, 9.4), layout="constrained")
 
-    mesh = plot_value(
-        ax_prop, grid, V_prop,
-        f"Efficient approach ({len(t_prop)} HJ solves, {t_prop.sum():.0f} s)")
-    plot_value(
-        ax_base, grid, V_base,
-        f"Naive approach ({len(t_base)} HJ solves, {t_base.sum():.0f} s)")
-    fig.colorbar(mesh, ax=[ax_prop, ax_base], shrink=0.9, extend="both",
+    mesh = plot_value(ax_val, grid, V0, "Value function")
+    fig.colorbar(mesh, ax=ax_val, shrink=0.9, extend="both",
                  label=r"$V(x, y, \theta, \omega; 0)$")
 
     norm = Normalize(0.0, cv.T_FINAL)
-    plot_closed_loops(ax_cl0, sims_early, "Closed loop: grocery store or truck", norm)
-    lc = plot_closed_loops(ax_cl1, sims_tour, "Closed loop: tour targets 1, 2, 3", norm)
-    fig.colorbar(lc, ax=[ax_cl0, ax_cl1], shrink=0.9, label="time")
+    lc = None
+    for ax, key in ((ax_tour, "tour"), (ax_store, "target 0"), (ax_truck, "truck")):
+        if key in by_outcome:
+            lc = plot_closed_loops(ax, [by_outcome[key]], titles[key], norm)
+        else:
+            draw_scene(ax)
+            ax.set_title(titles[key] + " (no trajectory)")
+    if lc is not None:
+        fig.colorbar(lc, ax=[ax_tour, ax_truck], shrink=0.9, label="time")
 
-    print(f"max |V_efficient - V_naive| at t = 0: {np.abs(V_prop - V_base).max():.3e}")
     fig.savefig(cv.HERE / "results.png", dpi=200)
     fig.savefig(cv.HERE / "results.pdf")
     plt.show()
