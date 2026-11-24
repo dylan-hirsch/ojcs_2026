@@ -1,4 +1,6 @@
 # fundamental numerical library
+from pathlib import Path
+
 import hj_reachability as hj
 import numpy as np
 import jax.numpy as jnp
@@ -33,6 +35,10 @@ def compute_value(model, grid, times, r, q, l):
     )
 
     return V
+
+
+HERE = Path(__file__).resolve().parent
+
 
 if __name__ == "__main__":
 
@@ -154,5 +160,5 @@ if __name__ == "__main__":
                 ax.axvspan(cl.times[0], cl.times[-1], color="gray",
                            alpha=0.15, zorder=0)
 
-    fig.savefig("/Users/dylanhirsch/Desktop/PK.pdf")
+    fig.savefig(HERE / "PK.pdf")
     plt.show()
